@@ -19,7 +19,7 @@ func main() {
 	r.HandleFunc("/api/user/", showUserIndex)
 	r.HandleFunc("/api/user/create", createUser).Methods("POST")
 	r.HandleFunc("/api/user/{id:[0-9]+}", deleteUser).Methods("DELETE")
-	r.HandleFunc("/api/user/update", updateUser).Methods("POST")
+	r.HandleFunc("/api/user/update/{id:[0-9]+}", updateUser).Methods("PUT")
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
@@ -70,6 +70,9 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
 	db := connect.Connect()
 	defer db.Close()
 
@@ -78,6 +81,25 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	updt, err := db.Prepare("UPDATE user SET firstname = ?, lastname = ?, age = ?, email = ? WHERE id = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = updt.Exec(user.FirstName, user.LastName, user.Age, user.Email, id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bytes, err := json.Marshal(user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.Write(([]byte(string(bytes))))
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("Update a User Profile!"))
 
 	// update, err := db.Prepare("")
 }
@@ -103,15 +125,3 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "User with ID = %s has been deleted sucsessfuly\n", id)
 
 }
-
-// // 引数として渡したv (any or interface) をjson形式のデータとして
-// // string形式で取得する関数
-// func jsonEncode(v interface{}) string {
-// 	//vをjson形式に変換して返す関数jsonパッケージ内のMarshal関数をbytesに代入している
-// 	bytes, err := json.Marshal(v)
-// 	if err != nil {
-// 		log.Fatal(err.Error())
-// 	}
-// 	//返すbytesはjson形式のデータで、これをstring形式で返している
-// 	return string(bytes)
-// }
