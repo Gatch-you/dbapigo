@@ -22,6 +22,7 @@ func FetchIndex() []User {
 	defer db.Close()
 
 	fmt.Printf("FetchIndexの内容")
+	fmt.Println(db)
 
 	//db.Query(" ")にて" "内のクエリを実行して、その結果をrowsに代入している。
 	//よって、rowsにはuser内の全てのデータが代入されている。
