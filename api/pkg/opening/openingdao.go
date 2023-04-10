@@ -21,8 +21,8 @@ func FetchIndex() []User {
 	db := db.Connect()
 	defer db.Close()
 
-	fmt.Printf("FetchIndexの内容")
-	fmt.Println(db)
+	// fmt.Printf("FetchIndexの内容")
+	// fmt.Println(db)
 
 	//db.Query(" ")にて" "内のクエリを実行して、その結果をrowsに代入している。
 	//よって、rowsにはuser内の全てのデータが代入されている。
@@ -33,11 +33,11 @@ func FetchIndex() []User {
 		panic(err.Error())
 	}
 	//rowsの確認コード
-	fmt.Println("\n\nrowsの内容\n", rows)
+	// fmt.Println("\n\nrowsの内容\n", rows)
 
 	//userArgsというUser構造体を持つ配列スライスを初期化、作成する。
 	userArgs := make([]User, 0)
-	fmt.Println("\nこの時点でのuseArgsの内容\n", userArgs)
+	// fmt.Println("\nこの時点でのuseArgsの内容\n", userArgs)
 	//rows.Next()にて次の行(データ)がなくなるまで処理を実行する
 	for rows.Next() {
 		var user User
@@ -48,10 +48,11 @@ func FetchIndex() []User {
 		}
 		//append関数を使ってuserArgsに取得したuser情報を入れている
 		userArgs = append(userArgs, user)
-		fmt.Println("\nuserの内容\n", user)
+
 	}
-	fmt.Println("\n最終的なrows\n", rows)
-	fmt.Println("\n最終的なuseArgs\n", userArgs)
+
+	// fmt.Println("\n最終的なrows\n", rows)
+	// fmt.Println("\n最終的なuseArgs\n", userArgs)
 	return userArgs
 }
 
@@ -76,18 +77,68 @@ func FetchByKey(id string) []User {
 	return userArgs
 }
 
-// func Insert(id int, firstname string, lastname string, age int, email string) []User {
+// 失敗！ローカルサーバーが応答しなかった...
+func Create(id int, firstname string, lastname string, age int, email string) []User {
+	db := db.Connect()
+	defer db.Close()
+
+	var user User
+
+	stmt, err := db.Prepare("INSERT INTO user (id, firstname, lastname, age, email) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(user.ID, "userID")
+	//この下でエラーが出てるっぽい
+	// var number int
+	// number, _ = strconv.Atoi(id)
+
+	// var ageNumber int
+	// ageNumber, _ = strconv.Atoi(age)
+
+	_, err = stmt.Exec(id, firstname, lastname, age, email)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	f := FetchIndex()
+	return f
+}
+
+// func Update(id int, firstname string, lastname string, age int, email string) []User {
 // 	db := db.Connect()
 // 	defer db.Close()
 
-// 	insert, err := db.Prepare("INSERT INTO user (id, firstname, lastname, age, email) VALUES(?, ?, ?, ?, ?)")
-// 	fmt.Println(insert)
+// 	updt, err := db.Prepare("UPDATE user SET firstname = ?, lastname = ?, age = ?, email = ? WHERE id = ?")
 // 	if err != nil {
 // 		log.Fatal(err)
 // 	}
-// 	_, err := insert.Exec(id, firstname, lastname, age, email)
+
+// 	_, err = updt.Exec(id, firstname, lastname, age, email)
 // 	if err != nil {
 // 		log.Fatal(err)
 // 	}
-// 	return insert
+
+// 	f := FetchByKey()
+// 	return f
 // }
+
+// openingdaoと処理を分割したコード
+func Delete(id string) []User {
+	db := db.Connect()
+	defer db.Close()
+
+	delete, err := db.Prepare("DELETE FROM user WHERE id = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = delete.Exec(id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("User ID = %v has been deleted sucsessfuly", id)
+	f := FetchByKey(id)
+	return f
+}
